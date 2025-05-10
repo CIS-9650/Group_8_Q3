@@ -1,10 +1,8 @@
 # scraping_mens_volleyball.py
 
-# CODE FOR SCRAPING ALL THE NAMES & HEGHTS FROM ALL MEN'S VOLLEYBALL TEAMS (EXCEPT BALL STATE)
-# WITH PANDAS DATAFRAME AND SUMMARY
-
-# this is where the portion of code to scrape the heights of
-# the mens' volleyball teams is being developed
+# code for scraping all the names & heghts from all men's volleyball teams 
+# (ball state scrape still missing) 
+# creates pandas dataframe, prints, and summarizes
 
 import requests
 from bs4 import BeautifulSoup
@@ -31,7 +29,7 @@ headers = {
   }
 
 class Tallness:
-  
+
   def __init__(self, feet, inches):
     self.feet = feet
     self.inches = inches
@@ -43,7 +41,6 @@ class Tallness:
     return self.feet * 12 + self.inches
 
 
-
 def feetToInches(player_height):
     item = player_height.split("-")
     feet=int(item[0].strip())
@@ -52,59 +49,48 @@ def feetToInches(player_height):
     height_in_inches = tall.inchConvert()
     return height_in_inches
 
-
-def playerNames_Heights(team,url):
-
-  roster_names = []
-  roster_heights = []
-  player_dict = {}
-
+def scrape_page(url):
   page = requests.get(url, headers=headers)
-
-  if page.status_code == 200:   
+  if page.status_code == 200:
     soup = BeautifulSoup(page.content, 'html.parser')
+    return soup
   else:
     return None
 
-  heights = soup.find_all('td', class_ ='height')
+def player_names(soup):
+  roster_names = []
   names = soup.find_all('td', class_ ='sidearm-table-player-name')
-
   for name in names:
     roster_names.append(name.get_text().strip())
+  return roster_names
 
+def player_heights(soup):
+  roster_heights = []
+  heights = soup.find_all('td', class_ ='height')
   for height in heights:
-    h = height.get_text()
-    roster_heights.append(feetToInches(h))
-  
-  for x in range (len(roster_heights)):
-    player_dict.update({roster_names[x]:roster_heights[x]})
+    player_height = height.get_text()
+    roster_heights.append(feetToInches(player_height))
+  return roster_heights
 
-  return player_dict
-    
-
-def makeAllDictionary():
-  all_dict = {}
-
+def make_player_dictionary():
+  heights = []
+  names = []
   for team in volleyball_teams:
     url = volleyball_teams[team]
-    data = playerNames_Heights(team,url)
-    if data == None:
-      continue
-    all_dict.update(data)
-  return all_dict
+    soup = scrape_page(url)
+    if soup == None:
+      continue    
+    else:
+      heights.extend(player_heights(soup))
+      names.extend(player_names(soup))
+  player_dict = {'Name' : names,'Height' : heights}
+  return player_dict
 
 
 def main():
-  final = makeAllDictionary()
-  
-  pandas_dict = {
-      'Name' : final.keys(),
-      'Height' : final.values()
-  }
-
-  df = pd.DataFrame(pandas_dict)
+  final = make_player_dictionary()
+  df = pd.DataFrame(final)
   print(df.describe())
   print(df)
-  
 
 main()
