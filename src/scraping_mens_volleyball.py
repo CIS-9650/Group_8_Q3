@@ -1,8 +1,8 @@
 # scraping_mens_volleyball.py
 
-# code for scraping all the names & heghts from all men's volleyball teams 
-# (ball state scrape still missing) 
-# creates pandas dataframe, prints, and summarizes
+# Code for scraping all the names & heghts from all men's volleyball teams. 
+# Includes alrernate code in functions for scraping Ball State.
+# Creates pandas dataframe, summarizes data, and prints table.
 
 import requests
 from bs4 import BeautifulSoup
@@ -41,8 +41,13 @@ class Tallness:
     return self.feet * 12 + self.inches
 
 
-def feetToInches(player_height):
-    item = player_height.split("-")
+def feetToInches(player_height,team):
+    
+    if team == 'Ball State':
+      item = player_height.split("'")
+    else:
+      item = player_height.split("-")
+
     feet=int(item[0].strip())
     inches=int(item[1].strip())
     tall = Tallness(feet,inches)
@@ -57,20 +62,32 @@ def scrape_page(url):
   else:
     return None
 
-def player_names(soup):
+def player_names(soup,team):
   roster_names = []
-  names = soup.find_all('td', class_ ='sidearm-table-player-name')
+  if team == 'Ball State':
+    names = soup.find_all('h3')
+  else:
+    names = soup.find_all('td', class_ ='sidearm-table-player-name')
+  
   for name in names:
     roster_names.append(name.get_text().strip())
   return roster_names
 
-def player_heights(soup):
+def player_heights(soup,team):
   roster_heights = []
-  heights = soup.find_all('td', class_ ='height')
-  for height in heights:
-    player_height = height.get_text()
-    roster_heights.append(feetToInches(player_height))
-  return roster_heights
+  if team == 'Ball State':
+    heights = soup.find_all('span',class_='s-person-details__bio-stats-item')
+    for height in heights:
+      if height.get_text().startswith('Height'):
+        player_height = height.get_text()[7:-3]
+        roster_heights.append(feetToInches(player_height,team))
+    return roster_heights
+  else:
+    heights = soup.find_all('td', class_ ='height')
+    for height in heights:
+      player_height = height.get_text()
+      roster_heights.append(feetToInches(player_height,team))
+    return roster_heights
 
 def make_player_dictionary():
   heights = []
@@ -81,8 +98,8 @@ def make_player_dictionary():
     if soup == None:
       continue    
     else:
-      heights.extend(player_heights(soup))
-      names.extend(player_names(soup))
+      heights.extend(player_heights(soup,team))
+      names.extend(player_names(soup,team))
   player_dict = {'Name' : names,'Height' : heights}
   return player_dict
 
