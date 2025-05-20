@@ -9,12 +9,12 @@
 # Important: This code prints results as proof of effectiveness of the base code. It loops through the
 # list of teams and prints them one after the other.
 
-# Each loop of this first-draft code will need to have added some fuctionality to:
-#     - output each data frame as a csv
-#     - analyze each data frame for averages, although we can continue to use the .describe() method here
-#     - output data to a sql database file
-#     - print the 8 tables of 5 shortest and tallest in each sport
-#     - produce a bar graph
+# Each loop of this first-draft code have added some fuctionality to the following:
+#     - It has the output of each data frame as a csv
+#     - It analyzes each data frame for averages, although we could continue to use the .describe() method here
+#     - It has the output data to a sql database file
+#     - It prints the 8 tables of 5 shortest and tallest height in each sport
+#     - It produces a bar graph for average height per team
 
 
 import requests
