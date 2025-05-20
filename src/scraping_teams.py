@@ -21,7 +21,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import sqlite3
-
+import matplotlib.pyplot as plt
 
 # Four dictionaries of teams and their web rosters divided by sport.
 # Dictionary that included team names was chosen over a siple list of URLs in order to support debugging
@@ -276,5 +276,11 @@ def main():
 
   db_conn.commit()
   db_conn.close()
+  print("\n\n")
+
+  # Bar Chart to visualize Average height by team
+  print("Bar Chart of Average Heights by Team:")
+  summary_df.plot.bar(x='team_name', y='average_height', title='Average Height by Sport')
+  plt.show()
 
 main()
