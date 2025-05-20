@@ -20,6 +20,8 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import sqlite3
+
 
 # Four dictionaries of teams and their web rosters divided by sport.
 # Dictionary that included team names was chosen over a siple list of URLs in order to support debugging
@@ -184,6 +186,11 @@ def make_player_dictionary(sport):
 
 def main():
 
+#creating file based database
+
+  db_conn = sqlite3.connect("teams_heights.db")
+  cursor = db_conn.cursor()
+
 # sports is a dictionary to loop through team value as a parameter in the make_player_dictionary
 # funtion call. The keys are used for the headers that print each dataframe.
 
@@ -194,6 +201,11 @@ def main():
       "Female Volleyball Players":womens_volleyball_teams
         }
 
+#empty list to store avg height summary
+  team_names = []
+  avg_heights = []
+
+
   for sport in sports:
 
     print('\n'+'_'*len(sport)+'\n')                 # prints a header for each dataframe produced
@@ -202,7 +214,67 @@ def main():
 
     final = make_player_dictionary(sports[sport])   # function call to produce the name/height dictionary called final
     df = pd.DataFrame(final)                        # creates each dataframe based on the name/height dictionary
+
+    df.to_csv(sport + ".csv", index=False)          #output as csv file
     print(df.describe())
     print(df)
+
+#all team data to sql
+
+    table_name = sport.lower().replace(" ", "_")
+    df.to_sql(table_name, db_conn, if_exists='replace', index=False)
+
+
+#output average height each team
+
+    avg_height = df['Height'].mean()
+    print(f'\nThe average height for {sport} is {avg_height}')
+
+#update empty lists for summary
+    team_names.append(sport)
+    avg_heights.append(avg_height)
+
+# 5 tallest each team
+    top_heights = df['Height'].nlargest(5).unique()
+    fifth_height = top_heights[-1]
+    tallest = df[df['Height'] >= fifth_height]
+
+# 5 shortest each team
+    shortest_heights = df['Height'].nsmallest(5).unique()
+    fifth_height = shortest_heights[-1]
+    shortest = df[df['Height'] <= fifth_height]
+
+#output tallest and shortest
+    print(f"\nTallest in {sport}:\n")
+    print(tallest)
+
+    print(f"\nShortest in {sport}:\n")
+    print(shortest)
+
+    tallest_table = f"tallest_{table_name}"
+    shortest_table = f"shortest_{table_name}"
+
+#tallest and shortest to sql
+
+    tallest.to_sql(tallest_table, db_conn, if_exists='replace', index=False)
+    shortest.to_sql(shortest_table, db_conn, if_exists='replace', index=False)
+
+#average height summary
+
+  summary = {
+      'team_name': team_names,
+      'average_height': avg_heights
+  }
+
+  summary_df = pd.DataFrame(summary)
+  print("\nSummary of Average Heights:\n")
+  print(summary_df)
+
+#average height summary to sql
+
+  summary_df.to_sql("team_averages", db_conn, if_exists='replace', index=False)
+
+  db_conn.commit()
+  db_conn.close()
 
 main()
